@@ -19,7 +19,8 @@ def data():
         params['key_file_location'] = './gcp-jp.p12'
         ga = GoogleAnalytics(params=params)
         query_params = {
-            'ids': 'ga:114540399', # You need to specify your own Google Analytics View ID.
+            # You need to specify your own Google Analytics View ID.
+            'ids': 'ga:114540399',
             'start_date': '2016-01-01',
             'end_date': '2016-07-20',
             'dimensions': 'ga:date,ga:hour',
@@ -49,11 +50,24 @@ def test_googleanalytics_data_shape(data):
 
 def test_googleanalytics_data_summary(data):
     # You must set DataFrame data based on your query_params.
-    expected_summary_df = pd.DataFrame([[1000, 1000, 1000, 1000], # number of records results from API query.
-                                       [98, 24, 10, 14], # count of unique values.
-                                       ['20160223', '16', '1', '1'], # max value.
-                                       [20, 66, 577, 483]]) # frequency of most common.
-    expected_summary_df.index = ['count', 'unique', 'top', 'freq']
-    expected_summary_df.columns = ['date', 'hour', 'sessions', 'pageviews']
+    expected_summary_df = pd.DataFrame([
+                                        # number of records results from API query.
+                                        [1000.000000, 1000.000000],
+                                        # mean.
+                                        [1.706000, 2.159000],
+                                        # std.
+                                        [1.144934, 1.747791],
+                                        # min.
+                                        [0.000000, 1.000000],
+                                        # 25%.
+                                        [1.000000, 1.000000],
+                                        # 50%.
+                                        [1.000000, 2.000000],
+                                        # 75%.
+                                        [2.000000, 3.000000],
+                                        # max.
+                                        [11.000000, 15.000000]])
+    expected_summary_df.index = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
+    expected_summary_df.columns = ['sessions', 'pageviews']
 
     assert data.total.describe().equals(expected_summary_df)

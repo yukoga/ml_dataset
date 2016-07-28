@@ -63,26 +63,14 @@ class GoogleAnalytics(AbstractDataset):
                   (error.resp.status, error._get_reason()))
         rows = v4_response['reports'][0]['data']['rows']
         headers = v4_response['reports'][0]['columnHeader']
-        index_col = []
-        if 'dimensions' in headers:
-            index_col = headers['dimensions']
-        index_col.extend([v.get('name') for v in headers[
-            'metricHeader']['metricHeaderEntries']])
-        index_col = [re.sub(r'ga:(.*)', r'\1', v) for v in index_col]
-        _table_data = []
-        _metrics = [v.get('metrics')[0].get('values') for v in rows]
-        if 'dimensions' in rows[0]:
-            _table_data = [v.get('dimensions') for v in rows]
-            _ = [u.extend(v) for u, v in zip(_table_data, _metrics)]
-        else:
-            _table_data = _metrics
-        return pd.DataFrame(_table_data, columns=index_col)
+        index_col = self.__build_headers_for_dataframe(headers)
+        data = self.__transform_rows_for_dataframe(rows)
+        return pd.DataFrame(data, columns=index_col)
 
     def _build_v3_query(self, params):
         if not isinstance(params, dict):
             raise TypeError('query parameters must be dictionary.')
         required_parameters = ['metrics', 'ids', 'start_date', 'end_date']
-#        if not all([v in required_parameters for v in params.keys()]):
         if not all([v in params for v in required_parameters]):
             raise TypeError(
                 'Query condition should have all '
@@ -94,3 +82,25 @@ class GoogleAnalytics(AbstractDataset):
             raise TypeError('query parameters must be dictionary.')
         v3_request = self._build_v3_query(params)
         return gav4.convert_request(**v3_request)
+
+    def __build_headers_for_dataframe(self, headers):
+        index_col = []
+        if 'dimensions' in headers:
+            index_col = headers['dimensions']
+        index_col.extend([v.get('name') for v in headers[
+            'metricHeader']['metricHeaderEntries']])
+        index_col = [re.sub(r'ga:(.*)', r'\1', v) for v in index_col]
+        return index_col
+
+    def __transform_rows_for_dataframe(self, rows):
+        _table_data = []
+        _metrics = [v.get('metrics')[0].get('values') for v in rows]
+        _metrics = [map(lambda s: float(s) if re.match(
+            r'[0-9]+\.[0-9]+', s) is not None else int(s), l)
+                    for l in _metrics]
+        if 'dimensions' in rows[0]:
+            _table_data = [v.get('dimensions') for v in rows]
+            _ = [u.extend(v) for u, v in zip(_table_data, _metrics)]
+        else:
+            _table_data = _metrics
+        return _table_data
