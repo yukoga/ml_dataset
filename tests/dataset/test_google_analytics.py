@@ -19,7 +19,7 @@ def data():
         params['key_file_location'] = './gcp-jp.p12'
         ga = GoogleAnalytics(params=params)
         query_params = {
-            'ids': 'ga:114540399',
+            'ids': 'ga:114540399', # You need to specify your own Google Analytics View ID.
             'start_date': '2016-01-01',
             'end_date': '2016-07-20',
             'dimensions': 'ga:date,ga:hour',
@@ -48,10 +48,11 @@ def test_googleanalytics_data_shape(data):
 
 
 def test_googleanalytics_data_summary(data):
-    expected_summary_df = pd.DataFrame([[1000, 1000, 1000, 1000],
-                                       [98, 24, 10, 14],
-                                       ['20160223', '16', '1', '1'],
-                                       [20, 66, 577, 483]])
+    # You must set DataFrame data based on your query_params.
+    expected_summary_df = pd.DataFrame([[1000, 1000, 1000, 1000], # number of records results from API query.
+                                       [98, 24, 10, 14], # count of unique values.
+                                       ['20160223', '16', '1', '1'], # max value.
+                                       [20, 66, 577, 483]]) # frequency of most common.
     expected_summary_df.index = ['count', 'unique', 'top', 'freq']
     expected_summary_df.columns = ['date', 'hour', 'sessions', 'pageviews']
 
